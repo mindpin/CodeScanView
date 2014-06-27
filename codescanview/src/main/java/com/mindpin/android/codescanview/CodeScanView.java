@@ -1,16 +1,12 @@
 package com.mindpin.android.codescanview;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
 import android.graphics.Point;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Vibrator;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
@@ -19,10 +15,9 @@ import android.view.animation.LinearInterpolator;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 import com.zbar.lib.camera.CameraManager;
-import com.zbar.lib.decode.CaptureActivityHandler;
-import com.zbar.lib.decode.InactivityTimer;
+import com.mindpin.android.codescanview.decode.CaptureViewHandler;
+import com.mindpin.android.codescanview.decode.ViewInactivityTimer;
 
 import java.io.IOException;
 
@@ -37,9 +32,9 @@ import java.io.IOException;
  */
 public class CodeScanView extends RelativeLayout implements Callback {
 
-	private CaptureActivityHandler handler;
+	private CaptureViewHandler handler;
 	private boolean hasSurface;
-	private InactivityTimer inactivityTimer;
+	private ViewInactivityTimer inactivityTimer;
 	private MediaPlayer mediaPlayer;
 	private boolean playBeep;
 	private static final float BEEP_VOLUME = 0.50f;
@@ -51,6 +46,7 @@ public class CodeScanView extends RelativeLayout implements Callback {
 	private RelativeLayout mContainer = null;
 	private RelativeLayout mCropLayout = null;
 	private boolean isNeedCapture = false;
+    private CodeScanListener mCodeScanListener = null;
 
     public CodeScanView(Context context) {
         this(context, null);
@@ -62,12 +58,11 @@ public class CodeScanView extends RelativeLayout implements Callback {
 
     public CodeScanView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        inflate(context, R.layout.activity_qr_scan, null);
-
+        LayoutInflater.from(context).inflate(R.layout.activity_qr_scan, this,  true);
 
         CameraManager.init(context);
         hasSurface = false;
-        inactivityTimer = new InactivityTimer(this);
+        inactivityTimer = new ViewInactivityTimer(this);
 
         mContainer = (RelativeLayout) findViewById(R.id.capture_containter);
         mCropLayout = (RelativeLayout) findViewById(R.id.capture_crop_layout);
@@ -90,19 +85,19 @@ public class CodeScanView extends RelativeLayout implements Callback {
 		this.isNeedCapture = isNeedCapture;
 	}
 
-	public int getX() {
+	public int getCustomX() {
 		return x;
 	}
 
-	public void setX(int x) {
+	public void setCustomX(int x) {
 		this.x = x;
 	}
 
-	public int getY() {
+	public int getCustomY() {
 		return y;
 	}
 
-	public void setY(int y) {
+	public void setCustomY(int y) {
 		this.y = y;
 	}
 
@@ -137,10 +132,10 @@ public class CodeScanView extends RelativeLayout implements Callback {
 
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	protected void onResume() {
-		super.onResume();
+//	@SuppressWarnings("deprecation")
+//	@Override
+	public void start_preview() {
+//		super.start_preview();
 		SurfaceView surfaceView = (SurfaceView) findViewById(R.id.capture_preview);
 		SurfaceHolder surfaceHolder = surfaceView.getHolder();
 		if (hasSurface) {
@@ -149,18 +144,18 @@ public class CodeScanView extends RelativeLayout implements Callback {
 			surfaceHolder.addCallback(this);
 			surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		}
-		playBeep = true;
-		AudioManager audioService = (AudioManager) getSystemService(AUDIO_SERVICE);
-		if (audioService.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
-			playBeep = false;
-		}
-		initBeepSound();
-		vibrate = true;
+//		playBeep = true;
+//		AudioManager audioService = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+//		if (audioService.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
+//			playBeep = false;
+//		}
+//		initBeepSound();
+//		vibrate = true;
 	}
 
-	@Override
-	protected void onPause() {
-		super.onPause();
+////	@Override
+	public void stop_preview() {
+//		super.stop_preview();
 		if (handler != null) {
 			handler.quitSynchronously();
 			handler = null;
@@ -168,16 +163,18 @@ public class CodeScanView extends RelativeLayout implements Callback {
 		CameraManager.get().closeDriver();
 	}
 
-	@Override
-	protected void onDestroy() {
+//	@Override
+	public void onDestroy() {
 		inactivityTimer.shutdown();
-		super.onDestroy();
+//		super.onDestroy();
 	}
 
 	public void handleDecode(String result) {
 		inactivityTimer.onActivity();
-		playBeepSoundAndVibrate();
-		Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
+        if(mCodeScanListener != null)
+            mCodeScanListener.on_code_read(result);
+//		playBeepSoundAndVibrate();
+//		Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
 
 		// 连续扫描，不发送此消息扫描一次结束后就不能再次扫描
 		// handler.sendEmptyMessage(R.id.restart_preview);
@@ -197,8 +194,8 @@ public class CodeScanView extends RelativeLayout implements Callback {
 			int cropWidth = mCropLayout.getWidth() * width / mContainer.getWidth();
 			int cropHeight = mCropLayout.getHeight() * height / mContainer.getHeight();
 
-			setX(x);
-			setY(y);
+			setCustomX(x);
+			setCustomY(y);
 			setCropWidth(cropWidth);
 			setCropHeight(cropHeight);
 			// 设置是否需要截图
@@ -208,10 +205,12 @@ public class CodeScanView extends RelativeLayout implements Callback {
 		} catch (IOException ioe) {
 			return;
 		} catch (RuntimeException e) {
+            if(mCodeScanListener != null)
+                mCodeScanListener.camera_not_found();
 			return;
 		}
 		if (handler == null) {
-			handler = new CaptureActivityHandler(CodeScanView.this);
+			handler = new CaptureViewHandler(CodeScanView.this);
 		}
 	}
 
@@ -238,40 +237,50 @@ public class CodeScanView extends RelativeLayout implements Callback {
 		return handler;
 	}
 
-	private void initBeepSound() {
-		if (playBeep && mediaPlayer == null) {
-			setVolumeControlStream(AudioManager.STREAM_MUSIC);
-			mediaPlayer = new MediaPlayer();
-			mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-			mediaPlayer.setOnCompletionListener(beepListener);
+//	private void initBeepSound() {
+//		if (playBeep && mediaPlayer == null) {
+//			setVolumeControlStream(AudioManager.STREAM_MUSIC);
+//			mediaPlayer = new MediaPlayer();
+//			mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+//			mediaPlayer.setOnCompletionListener(beepListener);
+//
+//			AssetFileDescriptor file = getResources().openRawResourceFd(R.raw.beep);
+//			try {
+//				mediaPlayer.setDataSource(file.getFileDescriptor(), file.getStartOffset(), file.getLength());
+//				file.close();
+//				mediaPlayer.setVolume(BEEP_VOLUME, BEEP_VOLUME);
+//				mediaPlayer.prepare();
+//			} catch (IOException e) {
+//				mediaPlayer = null;
+//			}
+//		}
+//	}
 
-			AssetFileDescriptor file = getResources().openRawResourceFd(R.raw.beep);
-			try {
-				mediaPlayer.setDataSource(file.getFileDescriptor(), file.getStartOffset(), file.getLength());
-				file.close();
-				mediaPlayer.setVolume(BEEP_VOLUME, BEEP_VOLUME);
-				mediaPlayer.prepare();
-			} catch (IOException e) {
-				mediaPlayer = null;
-			}
-		}
-	}
+//	private static final long VIBRATE_DURATION = 200L;
 
-	private static final long VIBRATE_DURATION = 200L;
-
-	private void playBeepSoundAndVibrate() {
-		if (playBeep && mediaPlayer != null) {
-			mediaPlayer.start();
-		}
-		if (vibrate) {
-			Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-			vibrator.vibrate(VIBRATE_DURATION);
-		}
-	}
+//	private void playBeepSoundAndVibrate() {
+//		if (playBeep && mediaPlayer != null) {
+//			mediaPlayer.start();
+//		}
+//		if (vibrate) {
+//			Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+//			vibrator.vibrate(VIBRATE_DURATION);
+//		}
+//	}
 
 	private final OnCompletionListener beepListener = new OnCompletionListener() {
 		public void onCompletion(MediaPlayer mediaPlayer) {
 			mediaPlayer.seekTo(0);
 		}
 	};
+
+
+    public void set_code_scan_listener(CodeScanListener mCodeScanListener) {
+        this.mCodeScanListener = mCodeScanListener;
+    }
+
+    public void handleDecodeFailure() {
+        if(mCodeScanListener != null)
+            mCodeScanListener.on_code_not_read();
+    }
 }
