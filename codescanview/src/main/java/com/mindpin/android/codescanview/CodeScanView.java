@@ -62,7 +62,6 @@ public class CodeScanView extends RelativeLayout implements Callback {
 
         CameraManager.init(context);
         hasSurface = false;
-        inactivityTimer = new ViewInactivityTimer(this);
 
         mContainer = (RelativeLayout) findViewById(R.id.capture_containter);
         mCropLayout = (RelativeLayout) findViewById(R.id.capture_crop_layout);
@@ -132,10 +131,8 @@ public class CodeScanView extends RelativeLayout implements Callback {
 
 	}
 
-//	@SuppressWarnings("deprecation")
-//	@Override
 	public void start_preview() {
-//		super.start_preview();
+        inactivityTimer = new ViewInactivityTimer(this);
 		SurfaceView surfaceView = (SurfaceView) findViewById(R.id.capture_preview);
 		SurfaceHolder surfaceHolder = surfaceView.getHolder();
 		if (hasSurface) {
@@ -153,20 +150,17 @@ public class CodeScanView extends RelativeLayout implements Callback {
 //		vibrate = true;
 	}
 
-////	@Override
 	public void stop_preview() {
-//		super.stop_preview();
 		if (handler != null) {
 			handler.quitSynchronously();
 			handler = null;
 		}
 		CameraManager.get().closeDriver();
+        destroy();
 	}
 
-//	@Override
-	public void onDestroy() {
+	void destroy() {
 		inactivityTimer.shutdown();
-//		super.onDestroy();
 	}
 
 	public void handleDecode(String result) {

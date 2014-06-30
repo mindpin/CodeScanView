@@ -71,10 +71,4 @@ protected void onPause() {
   super.onPause();
   code_scan_view.stop_preview();
 }
-
-@Override
-protected void onDestroy() {
-  code_scan_view.onDestroy();
-  super.onDestroy();
-}
 ```
