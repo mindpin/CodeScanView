@@ -1,4 +1,4 @@
-Android Code Scan View
+Android CodeScanView
 ============================
 Android 条形码、二维码扫描组件
 
@@ -78,4 +78,3 @@ protected void onDestroy() {
   super.onDestroy();
 }
 ```
-
