@@ -4,7 +4,6 @@ import android.os.Handler;
 import android.os.Message;
 import com.mindpin.android.codescanview.CodeScanView;
 import com.mindpin.android.codescanview.R;
-import com.mindpin.android.codescanview.decode.ViewDecodeThread;
 import com.zbar.lib.camera.CameraManager;
 
 /**
@@ -46,7 +45,7 @@ public final class CaptureViewHandler extends Handler {
             restartPreviewAndDecode();
         } else if (message.what == R.id.decode_succeeded) {
             state = State.SUCCESS;
-            view.handleDecode((String) message.obj);// 解析成功，回调
+            view.handle_decode((String) message.obj);// 解析成功，回调
         } else if (message.what == R.id.decode_failed) {
             state = State.PREVIEW;
             view.handleDecodeFailure();

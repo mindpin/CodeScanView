@@ -2,8 +2,6 @@ package com.mindpin.android.codescanview;
 
 import android.content.Context;
 import android.graphics.Point;
-import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -22,31 +20,27 @@ import com.mindpin.android.codescanview.decode.ViewInactivityTimer;
 import java.io.IOException;
 
 /**
- * 作者: 陈涛(1076559197@qq.com)
- * 
- * 时间: 2014年5月9日 下午12:25:31
- * 
- * 版本: V_1.0.0
- * 
- * 描述: 扫描界面
+ * Created by dd on 14-6-26.
  */
+
 public class CodeScanView extends RelativeLayout implements Callback {
 
-	private CaptureViewHandler handler;
-	private boolean hasSurface;
-	private ViewInactivityTimer inactivityTimer;
-	private MediaPlayer mediaPlayer;
-	private boolean playBeep;
-	private static final float BEEP_VOLUME = 0.50f;
-	private boolean vibrate;
-	private int x = 0;
-	private int y = 0;
-	private int cropWidth = 0;
-	private int cropHeight = 0;
-	private RelativeLayout mContainer = null;
-	private RelativeLayout mCropLayout = null;
-	private boolean isNeedCapture = false;
+    private CaptureViewHandler handler;
+    private boolean hasSurface;
+    private ViewInactivityTimer inactivityTimer;
+    private int x = 0;
+    private int y = 0;
+    private int cropWidth = 0;
+    private int cropHeight = 0;
+    private RelativeLayout mContainer = null;
+    private RelativeLayout mCropLayout = null;
+    private boolean isNeedCapture = false;
     private CodeScanListener mCodeScanListener = null;
+//    private MediaPlayer mediaPlayer;
+//    private boolean playBeep;
+//    private static final float BEEP_VOLUME = 0.50f;
+//    private boolean vibrate;
+//    boolean flag = true;
 
     public CodeScanView(Context context) {
         this(context, null);
@@ -58,7 +52,7 @@ public class CodeScanView extends RelativeLayout implements Callback {
 
     public CodeScanView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        LayoutInflater.from(context).inflate(R.layout.activity_qr_scan, this,  true);
+        LayoutInflater.from(context).inflate(R.layout.activity_qr_scan, this, true);
 
         CameraManager.init(context);
         hasSurface = false;
@@ -77,70 +71,55 @@ public class CodeScanView extends RelativeLayout implements Callback {
     }
 
     public boolean isNeedCapture() {
-		return isNeedCapture;
-	}
+        return isNeedCapture;
+    }
 
-	public void setNeedCapture(boolean isNeedCapture) {
-		this.isNeedCapture = isNeedCapture;
-	}
+    public void setNeedCapture(boolean isNeedCapture) {
+        this.isNeedCapture = isNeedCapture;
+    }
 
-	public int getCustomX() {
-		return x;
-	}
+    public int getCustomX() {
+        return x;
+    }
 
-	public void setCustomX(int x) {
-		this.x = x;
-	}
+    public void setCustomX(int x) {
+        this.x = x;
+    }
 
-	public int getCustomY() {
-		return y;
-	}
+    public int getCustomY() {
+        return y;
+    }
 
-	public void setCustomY(int y) {
-		this.y = y;
-	}
+    public void setCustomY(int y) {
+        this.y = y;
+    }
 
-	public int getCropWidth() {
-		return cropWidth;
-	}
+    public int getCropWidth() {
+        return cropWidth;
+    }
 
-	public void setCropWidth(int cropWidth) {
-		this.cropWidth = cropWidth;
-	}
+    public void setCropWidth(int cropWidth) {
+        this.cropWidth = cropWidth;
+    }
 
-	public int getCropHeight() {
-		return cropHeight;
-	}
+    public int getCropHeight() {
+        return cropHeight;
+    }
 
-	public void setCropHeight(int cropHeight) {
-		this.cropHeight = cropHeight;
-	}
+    public void setCropHeight(int cropHeight) {
+        this.cropHeight = cropHeight;
+    }
 
-	boolean flag = true;
-
-	protected void light() {
-		if (flag == true) {
-			flag = false;
-			// 开闪光灯
-			CameraManager.get().openLight();
-		} else {
-			flag = true;
-			// 关闪光灯
-			CameraManager.get().offLight();
-		}
-
-	}
-
-	public void start_preview() {
+    public void start_preview() {
         inactivityTimer = new ViewInactivityTimer(this);
-		SurfaceView surfaceView = (SurfaceView) findViewById(R.id.capture_preview);
-		SurfaceHolder surfaceHolder = surfaceView.getHolder();
-		if (hasSurface) {
-			initCamera(surfaceHolder);
-		} else {
-			surfaceHolder.addCallback(this);
-			surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-		}
+        SurfaceView surfaceView = (SurfaceView) findViewById(R.id.capture_preview);
+        SurfaceHolder surfaceHolder = surfaceView.getHolder();
+        if (hasSurface) {
+            init_camera(surfaceHolder);
+        } else {
+            surfaceHolder.addCallback(this);
+            surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        }
 //		playBeep = true;
 //		AudioManager audioService = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
 //		if (audioService.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
@@ -148,89 +127,99 @@ public class CodeScanView extends RelativeLayout implements Callback {
 //		}
 //		initBeepSound();
 //		vibrate = true;
-	}
+    }
 
-	public void stop_preview() {
-		if (handler != null) {
-			handler.quitSynchronously();
-			handler = null;
-		}
-		CameraManager.get().closeDriver();
+    public void stop_preview() {
+        if (handler != null) {
+            handler.quitSynchronously();
+            handler = null;
+        }
+        CameraManager.get().closeDriver();
         destroy();
-	}
+    }
 
-	void destroy() {
-		inactivityTimer.shutdown();
-	}
-
-	public void handleDecode(String result) {
-		inactivityTimer.onActivity();
-        if(mCodeScanListener != null)
+    public void handle_decode(String result) {
+        inactivityTimer.onActivity();
+        if (mCodeScanListener != null)
             mCodeScanListener.on_code_read(result);
 //		playBeepSoundAndVibrate();
 //		Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
 
-		// 连续扫描，不发送此消息扫描一次结束后就不能再次扫描
-		// handler.sendEmptyMessage(R.id.restart_preview);
-	}
+        // 连续扫描，不发送此消息扫描一次结束后就不能再次扫描
+        // handler.sendEmptyMessage(R.id.restart_preview);
+    }
 
-	private void initCamera(SurfaceHolder surfaceHolder) {
-		try {
-			CameraManager.get().openDriver(surfaceHolder);
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 
-			Point point = CameraManager.get().getCameraResolution();
-			int width = point.y;
-			int height = point.x;
+    }
 
-			int x = mCropLayout.getLeft() * width / mContainer.getWidth();
-			int y = mCropLayout.getTop() * height / mContainer.getHeight();
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        if (!hasSurface) {
+            hasSurface = true;
+            init_camera(holder);
+        }
+    }
 
-			int cropWidth = mCropLayout.getWidth() * width / mContainer.getWidth();
-			int cropHeight = mCropLayout.getHeight() * height / mContainer.getHeight();
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        hasSurface = false;
 
-			setCustomX(x);
-			setCustomY(y);
-			setCropWidth(cropWidth);
-			setCropHeight(cropHeight);
-			// 设置是否需要截图
-			setNeedCapture(true);
-			
+    }
 
-		} catch (IOException ioe) {
-			return;
-		} catch (RuntimeException e) {
-            if(mCodeScanListener != null)
+    public Handler getHandler() {
+        return handler;
+    }
+
+    public void set_code_scan_listener(CodeScanListener mCodeScanListener) {
+        this.mCodeScanListener = mCodeScanListener;
+    }
+
+    public void handleDecodeFailure() {
+        if (mCodeScanListener != null)
+            mCodeScanListener.on_code_not_read();
+    }
+
+    private void init_camera(SurfaceHolder surfaceHolder) {
+        try {
+            CameraManager.get().openDriver(surfaceHolder);
+
+            Point point = CameraManager.get().getCameraResolution();
+            int width = point.y;
+            int height = point.x;
+
+            int x = mCropLayout.getLeft() * width / mContainer.getWidth();
+            int y = mCropLayout.getTop() * height / mContainer.getHeight();
+
+            int cropWidth = mCropLayout.getWidth() * width / mContainer.getWidth();
+            int cropHeight = mCropLayout.getHeight() * height / mContainer.getHeight();
+
+            setCustomX(x);
+            setCustomY(y);
+            setCropWidth(cropWidth);
+            setCropHeight(cropHeight);
+            // 设置是否需要截图
+            setNeedCapture(true);
+
+
+        } catch (IOException ioe) {
+            return;
+        } catch (RuntimeException e) {
+            if (mCodeScanListener != null)
                 mCodeScanListener.camera_not_found();
-			return;
-		}
-		if (handler == null) {
-			handler = new CaptureViewHandler(CodeScanView.this);
-		}
-	}
+            return;
+        }
+        if (handler == null) {
+            handler = new CaptureViewHandler(CodeScanView.this);
+        }
+    }
 
-	@Override
-	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+    private void destroy() {
+        inactivityTimer.shutdown();
+    }
 
-	}
-
-	@Override
-	public void surfaceCreated(SurfaceHolder holder) {
-		if (!hasSurface) {
-			hasSurface = true;
-			initCamera(holder);
-		}
-	}
-
-	@Override
-	public void surfaceDestroyed(SurfaceHolder holder) {
-		hasSurface = false;
-
-	}
-
-	public Handler getHandler() {
-		return handler;
-	}
-
+    //声音
 //	private void initBeepSound() {
 //		if (playBeep && mediaPlayer == null) {
 //			setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -250,6 +239,12 @@ public class CodeScanView extends RelativeLayout implements Callback {
 //		}
 //	}
 
+//    private final OnCompletionListener beepListener = new OnCompletionListener() {
+//        public void onCompletion(MediaPlayer mediaPlayer) {
+//            mediaPlayer.seekTo(0);
+//        }
+//    };
+
 //	private static final long VIBRATE_DURATION = 200L;
 
 //	private void playBeepSoundAndVibrate() {
@@ -261,20 +256,18 @@ public class CodeScanView extends RelativeLayout implements Callback {
 //			vibrator.vibrate(VIBRATE_DURATION);
 //		}
 //	}
+//
+//    protected void light() {
+//        if (flag == true) {
+//            flag = false;
+//            // 开闪光灯
+//            CameraManager.get().openLight();
+//        } else {
+//            flag = true;
+//            // 关闪光灯
+//            CameraManager.get().offLight();
+//        }
+//
+//    }
 
-	private final OnCompletionListener beepListener = new OnCompletionListener() {
-		public void onCompletion(MediaPlayer mediaPlayer) {
-			mediaPlayer.seekTo(0);
-		}
-	};
-
-
-    public void set_code_scan_listener(CodeScanListener mCodeScanListener) {
-        this.mCodeScanListener = mCodeScanListener;
-    }
-
-    public void handleDecodeFailure() {
-        if(mCodeScanListener != null)
-            mCodeScanListener.on_code_not_read();
-    }
 }

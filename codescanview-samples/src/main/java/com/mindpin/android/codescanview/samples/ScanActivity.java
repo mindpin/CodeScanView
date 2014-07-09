@@ -23,7 +23,7 @@ public class ScanActivity extends Activity
         code_scan_view.set_code_scan_listener(new CodeScanListener(){
             public void on_code_read(String result){
 //                Toast.makeText(ScanActivity.this, result, Toast.LENGTH_LONG).show();
-                Log.d(TAG, result);
+//                Log.d(TAG, result);
                 Intent intent = new Intent(ScanActivity.this, TargetActivity.class);
                 intent.putExtra("result", result);
                 startActivity(intent);
@@ -33,7 +33,7 @@ public class ScanActivity extends Activity
                 Toast.makeText(ScanActivity.this, "没有找到摄像头", Toast.LENGTH_LONG).show();
             };
             public void on_code_not_read(){
-//                Toast.makeText(ScanActivity.this, "没有找到可以读取的条码/二维码", Toast.LENGTH_LONG).show();
+                Toast.makeText(ScanActivity.this, "没有找到可以读取的条码/二维码", Toast.LENGTH_LONG).show();
             };
         });
     }
